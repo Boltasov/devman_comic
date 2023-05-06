@@ -46,18 +46,19 @@ def get_upload_url(group_id, token, api_version):
     return response.json()['response']['upload_url']
 
 
-def upload_photo_to_vk(file, upload_url, group_id, token, api_version):
+def upload_photo_to_vk(filename, upload_url, group_id, token, api_version):
     params = {
         'group_id': group_id,
         'access_token': token,
         'v': api_version,
     }
-    files = {
-        'photo': file,
-    }
+    with open(filename, 'rb') as file:
+        files = {
+            'photo': file,
+        }
+        response = requests.post(upload_url, params=params, files=files)
+        response.raise_for_status()
 
-    response = requests.post(upload_url, params=params, files=files)
-    response.raise_for_status()
     return response.json()
 
 
@@ -75,7 +76,10 @@ def save_to_album(photo_response, group_id, token, api_version):
     response = requests.post(url, params)
     response.raise_for_status()
 
-    return response.json()
+    media_id = response.json()['response'][0]['id']
+    owner_id = response.json()['response'][0]['owner_id']
+
+    return media_id, owner_id
 
 
 def post_to_group(group_id, token, api_version, owner_id, media_id, comment):
@@ -102,22 +106,14 @@ if __name__ == '__main__':
     token = os.environ['VK_ACCESS_TOKEN']
     api_version = os.environ['VK_API_VERSION']
     group_id = os.environ['VK_GROUP_ID']
-    params = {
-        'group_id': group_id,
-        'access_token': token,
-        'v': api_version,
-    }
 
     filename, comment = upload_random_comic()
     try:
         upload_url = get_upload_url(group_id, token, api_version)
 
-        with open(filename, 'rb') as file:
-            photo_response = upload_photo_to_vk(file, upload_url, group_id, token, api_version)
+        photo_response = upload_photo_to_vk(filename, upload_url, group_id, token, api_version)
 
-        save_response = save_to_album(photo_response, group_id, token, api_version)
-        media_id = save_response['response'][0]['id']
-        owner_id = save_response['response'][0]['owner_id']
+        media_id, owner_id = save_to_album(photo_response, group_id, token, api_version)
 
         post_to_group(group_id, token, api_version, owner_id, media_id, comment)
     finally:
