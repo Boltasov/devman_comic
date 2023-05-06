@@ -28,7 +28,12 @@ def upload_random_comic():
     return filename, comment
 
 
-def get_upload_url(params):
+def get_upload_url(group_id, token, api_version):
+    params = {
+        'group_id': group_id,
+        'access_token': token,
+        'v': api_version,
+    }
     vk_base_url = 'https://api.vk.com/method'
     method_name = 'photos.getWallUploadServer'
     url = f'{vk_base_url}/{method_name}'
@@ -38,7 +43,12 @@ def get_upload_url(params):
     return response.json()['response']['upload_url']
 
 
-def send_photo(file, upload_url, params):
+def send_photo(file, upload_url, group_id, token, api_version):
+    params = {
+        'group_id': group_id,
+        'access_token': token,
+        'v': api_version,
+    }
     files = {
         'photo': file,
     }
@@ -48,9 +58,14 @@ def send_photo(file, upload_url, params):
     return response.json()
 
 
-def save_to_album(photo_response, params):
+def save_to_album(photo_response, group_id, token, api_version):
     vk_base_url = 'https://api.vk.com/method'
     method_name = 'photos.saveWallPhoto'
+    params = {
+        'group_id': group_id,
+        'access_token': token,
+        'v': api_version,
+    }
     params.update(photo_response)
     url = f'{vk_base_url}/{method_name}'
 
@@ -60,10 +75,18 @@ def save_to_album(photo_response, params):
     return response.json()
 
 
-def post_to_group(params):
+def post_to_group(group_id, token, api_version, owner_id, media_id, comment):
     vk_base_url = 'https://api.vk.com/method'
     method_name = 'wall.post'
     url = f'{vk_base_url}/{method_name}'
+    params = {
+        'owner_id': f'-{group_id}',  # id группы должно быть с минусом
+        'access_token': token,
+        'v': api_version,
+        'from_group': 1,
+        'attachments': f'photo{owner_id}_{media_id}',
+        'message': comment,
+    }
 
     response = requests.post(url, params)
     response.raise_for_status()
@@ -86,27 +109,19 @@ if __name__ == '__main__':
     filename, comment = upload_random_comic()
 
     # 1. Get upload url for the image
-    upload_url = get_upload_url(params)
+    upload_url = get_upload_url(group_id, token, api_version)
 
     # 2. Send image to VK
     with open(filename, 'rb') as file:
-        photo_response = send_photo(file, upload_url, params)
+        photo_response = send_photo(file, upload_url, group_id, token, api_version)
 
     # 3. Save image to the group album
-    save_response = save_to_album(photo_response, params)
+    save_response = save_to_album(photo_response, group_id, token, api_version)
     media_id = save_response['response'][0]['id']
     owner_id = save_response['response'][0]['owner_id']
 
     # 4. Publish to the group
-    publish_params = {
-        'owner_id': f'-{group_id}',  # id группы должно быть с минусом
-        'access_token': token,
-        'v': api_version,
-        'from_group': 1,
-        'attachments': f'photo{owner_id}_{media_id}',
-        'message': comment,
-    }
-    response = post_to_group(publish_params)
+    post_to_group(group_id, token, api_version, owner_id, media_id, comment)
 
     # 5. Delete the file
     os.remove(filename)
