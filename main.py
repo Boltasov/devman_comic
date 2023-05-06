@@ -5,11 +5,12 @@ import random
 from dotenv import load_dotenv
 
 
-'''
-Get token
-https://oauth.vk.com/authorize?client_id=51633822&redirect_uri=https://oauth.vk.com/blank.html&scope=photos,groups,wall&response_type=token
-https://oauth.vk.com/blank.html#access_token=&expires_in=86400&user_id=275658820
-'''
+def vk_api_post(vk_base_url, method_name, params):
+    url = f'{vk_base_url}/{method_name}'
+
+    response = requests.post(url, params)
+    response.raise_for_status()
+    return response.json()
 
 
 def get_comic(max_comic_id):
@@ -20,18 +21,16 @@ def get_comic(max_comic_id):
     response.raise_for_status()
 
     image_link = response.json()['img']
-    image = requests.get(image_link)
-    image.raise_for_status()
-
     comment = response.json()['alt']
-
     extension = os.path.splitext(image_link)[1]
     filename = f'{image_number}{extension}'
+
+    image = requests.get(image_link)
+    image.raise_for_status()
 
     with open(filename, 'wb') as file:
         file.write(image.content)
 
-    print(comment)
     return filename, comment
 
 
@@ -41,7 +40,6 @@ def get_upload_url(vk_base_url, params):
 
     response = requests.get(url, params)
     response.raise_for_status()
-    print(response.json())
     return response.json()['response']['upload_url']
 
 
@@ -57,24 +55,15 @@ def send_photo(file, upload_url, params):
 
 def save_to_album(vk_base_url, photo_response, params):
     method_name = 'photos.saveWallPhoto'
-    url = f'{vk_base_url}/{method_name}'
-    params['photo'] = photo_response['photo']
-    params['server'] = photo_response['server']
-    params['hash'] = photo_response['hash']
+    params.update(photo_response)
 
-    response = requests.post(url, params)
-    response.raise_for_status()
-    return response.json()
+    return vk_api_post(vk_base_url, method_name, params)
 
 
 def post_to_group(vk_base_url, params):
     method_name = 'wall.post'
-    url = f'{vk_base_url}/{method_name}'
 
-    response = requests.post(url, params)
-    response.raise_for_status()
-
-    return response.json()
+    return vk_api_post(vk_base_url, method_name, params)
 
 
 if __name__ == '__main__':
@@ -101,9 +90,9 @@ if __name__ == '__main__':
         photo_response = send_photo(file, upload_url, params)
 
     # 3. Save image to the group album
-    response = save_to_album(vk_url, photo_response, params)
-    media_id = response['response'][0]['id']
-    owner_id = response['response'][0]['owner_id']
+    save_response = save_to_album(vk_url, photo_response, params)
+    media_id = save_response['response'][0]['id']
+    owner_id = save_response['response'][0]['owner_id']
 
     # 4. Publish to the group
     publish_params = {
