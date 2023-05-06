@@ -6,8 +6,11 @@ from dotenv import load_dotenv
 
 
 def upload_random_comic():
-    max_comic_id = requests.get('https://xkcd.com/info.0.json').json()['num']
+    response = requests.get('https://xkcd.com/info.0.json')
+    response.raise_for_status()
+    max_comic_id = response.json()['num']
     image_number = random.randint(1, int(max_comic_id))
+
     url = f'https://xkcd.com/{image_number}/info.0.json'
 
     response = requests.get(url)
