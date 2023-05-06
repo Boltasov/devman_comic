@@ -71,7 +71,6 @@ if __name__ == '__main__':
     token = os.environ['VK_ACCESS_TOKEN']
     api_version = os.environ['VK_API_VERSION']
     group_id = os.environ['VK_GROUP_ID']
-    max_comic_id = os.environ['CURRENT_COMIC_NUMBER']
     vk_url = 'https://api.vk.com/method'
     params = {
         'group_id': group_id,
@@ -79,6 +78,7 @@ if __name__ == '__main__':
         'v': api_version,
     }
 
+    max_comic_id = requests.get('https://xkcd.com/info.0.json').json()['num']
     # 0. Download comic from xkcd.com
     filename, comment = get_comic(max_comic_id)
 
