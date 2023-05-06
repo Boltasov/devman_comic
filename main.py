@@ -46,7 +46,7 @@ def get_upload_url(group_id, token, api_version):
     return response.json()['response']['upload_url']
 
 
-def send_photo(file, upload_url, group_id, token, api_version):
+def upload_photo_to_vk(file, upload_url, group_id, token, api_version):
     params = {
         'group_id': group_id,
         'access_token': token,
@@ -113,7 +113,7 @@ if __name__ == '__main__':
         upload_url = get_upload_url(group_id, token, api_version)
 
         with open(filename, 'rb') as file:
-            photo_response = send_photo(file, upload_url, group_id, token, api_version)
+            photo_response = upload_photo_to_vk(file, upload_url, group_id, token, api_version)
 
         save_response = save_to_album(photo_response, group_id, token, api_version)
         media_id = save_response['response'][0]['id']
@@ -121,5 +121,4 @@ if __name__ == '__main__':
 
         post_to_group(group_id, token, api_version, owner_id, media_id, comment)
     finally:
-        # 5. Delete the file
         os.remove(filename)
