@@ -107,21 +107,21 @@ if __name__ == '__main__':
 
     # 0. Download comic from xkcd.com
     filename, comment = upload_random_comic()
+    try:
+        # 1. Get upload url for the image
+        upload_url = get_upload_url(group_id, token, api_version)
 
-    # 1. Get upload url for the image
-    upload_url = get_upload_url(group_id, token, api_version)
+        # 2. Send image to VK
+        with open(filename, 'rb') as file:
+            photo_response = send_photo(file, upload_url, group_id, token, api_version)
 
-    # 2. Send image to VK
-    with open(filename, 'rb') as file:
-        photo_response = send_photo(file, upload_url, group_id, token, api_version)
+        # 3. Save image to the group album
+        save_response = save_to_album(photo_response, group_id, token, api_version)
+        media_id = save_response['response'][0]['id']
+        owner_id = save_response['response'][0]['owner_id']
 
-    # 3. Save image to the group album
-    save_response = save_to_album(photo_response, group_id, token, api_version)
-    media_id = save_response['response'][0]['id']
-    owner_id = save_response['response'][0]['owner_id']
-
-    # 4. Publish to the group
-    post_to_group(group_id, token, api_version, owner_id, media_id, comment)
-
-    # 5. Delete the file
-    os.remove(filename)
+        # 4. Publish to the group
+        post_to_group(group_id, token, api_version, owner_id, media_id, comment)
+    finally:
+        # 5. Delete the file
+        os.remove(filename)
