@@ -31,7 +31,7 @@ def upload_random_comic():
     return filename, comment
 
 
-def get_upload_url(group_id, token, api_version):
+def get_vk_upload_url(group_id, token, api_version):
     params = {
         'group_id': group_id,
         'access_token': token,
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     filename, comment = upload_random_comic()
     try:
-        upload_url = get_upload_url(group_id, token, api_version)
+        upload_url = get_vk_upload_url(group_id, token, api_version)
 
         photo_response = upload_photo_to_vk(filename, upload_url, group_id, token, api_version)
 
