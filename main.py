@@ -16,17 +16,17 @@ def download_random_comic():
     response = requests.get(url)
     response.raise_for_status()
 
-    image_json = response.json()
-    image_link = image_json['img']
-    comment = image_json['alt']
+    response_unpacked = response.json()
+    image_link = response_unpacked['img']
+    comment = response_unpacked['alt']
     extension = os.path.splitext(image_link)[1]
     filename = f'{image_number}{extension}'
 
-    image = requests.get(image_link)
-    image.raise_for_status()
+    response = requests.get(image_link)
+    response.raise_for_status()
 
     with open(filename, 'wb') as file:
-        file.write(image.content)
+        file.write(response.content)
 
     return filename, comment
 
@@ -37,11 +37,9 @@ def get_vk_upload_url(group_id, token, api_version):
         'access_token': token,
         'v': api_version,
     }
-    vk_base_url = 'https://api.vk.com/method'
-    method_name = 'photos.getWallUploadServer'
-    url = f'{vk_base_url}/{method_name}'
+    endpoint = 'https://api.vk.com/method/photos.getWallUploadServer'
 
-    response = requests.get(url, params)
+    response = requests.get(endpoint, params)
     response.raise_for_status()
     return response.json()['response']['upload_url']
 
@@ -57,35 +55,32 @@ def upload_photo_to_vk(filename, upload_url, group_id, token, api_version):
             'photo': file,
         }
         response = requests.post(upload_url, params=params, files=files)
-        response.raise_for_status()
+    response.raise_for_status()
 
     return response.json()
 
 
 def save_to_album(photo_response, group_id, token, api_version):
-    vk_base_url = 'https://api.vk.com/method'
-    method_name = 'photos.saveWallPhoto'
+    endpoint = 'https://api.vk.com/method/photos.saveWallPhoto'
     params = {
         'group_id': group_id,
         'access_token': token,
         'v': api_version,
     }
     params.update(photo_response)
-    url = f'{vk_base_url}/{method_name}'
 
-    response = requests.post(url, params)
+    response = requests.post(endpoint, params)
     response.raise_for_status()
 
-    media_id = response.json()['response'][0]['id']
-    owner_id = response.json()['response'][0]['owner_id']
+    response_unpacked = response.json()['response'][0]
+    media_id = response_unpacked['id']
+    owner_id = response_unpacked['owner_id']
 
     return media_id, owner_id
 
 
 def post_to_group(group_id, token, api_version, owner_id, media_id, comment):
-    vk_base_url = 'https://api.vk.com/method'
-    method_name = 'wall.post'
-    url = f'{vk_base_url}/{method_name}'
+    endpoint = 'https://api.vk.com/method/wall.post'
     params = {
         'owner_id': f'-{group_id}',
         'access_token': token,
@@ -95,7 +90,7 @@ def post_to_group(group_id, token, api_version, owner_id, media_id, comment):
         'message': comment,
     }
 
-    response = requests.post(url, params)
+    response = requests.post(endpoint, params)
     response.raise_for_status()
 
     return response.json()
