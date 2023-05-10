@@ -60,18 +60,21 @@ def upload_photo_to_vk(filename, upload_url, group_id, token, api_version):
         response = requests.post(upload_url, params=params, files=files)
     response.raise_for_status()
     handle_vk_error(response)
+    response = response.json()
 
-    return response.json()
+    return response['server'], response['photo'], response['hash']
 
 
-def save_to_album(photo_response, group_id, token, api_version):
+def save_to_album(server, photo, hash, group_id, token, api_version):
     endpoint = 'https://api.vk.com/method/photos.saveWallPhoto'
     params = {
         'group_id': group_id,
         'access_token': token,
         'v': api_version,
+        'server': server,
+        'photo': photo,
+        'hash': hash,
     }
-    params.update(photo_response)
 
     response = requests.post(endpoint, params)
     response.raise_for_status()
@@ -112,9 +115,9 @@ if __name__ == '__main__':
     try:
         upload_url = get_vk_upload_url(group_id, token, api_version)
 
-        photo_response = upload_photo_to_vk(filename, upload_url, group_id, token, api_version)
+        server, photo, hash = upload_photo_to_vk(filename, upload_url, group_id, token, api_version)
 
-        media_id, owner_id = save_to_album(photo_response, group_id, token, api_version)
+        media_id, owner_id = save_to_album(server, photo, hash, group_id, token, api_version)
 
         post_to_group(group_id, token, api_version, owner_id, media_id, comment)
     finally:
