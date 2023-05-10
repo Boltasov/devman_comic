@@ -5,7 +5,7 @@ import random
 from dotenv import load_dotenv
 
 
-def upload_random_comic():
+def download_random_comic():
     response = requests.get('https://xkcd.com/info.0.json')
     response.raise_for_status()
     max_comic_id = response.json()['num']
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     api_version = os.environ['VK_API_VERSION']
     group_id = os.environ['VK_GROUP_ID']
 
-    filename, comment = upload_random_comic()
+    filename, comment = download_random_comic()
     try:
         upload_url = get_vk_upload_url(group_id, token, api_version)
 
