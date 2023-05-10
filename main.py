@@ -1,6 +1,7 @@
 import requests
 import os
 import random
+from vk_api_error import handle_vk_error
 
 from dotenv import load_dotenv
 
@@ -41,6 +42,8 @@ def get_vk_upload_url(group_id, token, api_version):
 
     response = requests.get(endpoint, params)
     response.raise_for_status()
+    handle_vk_error(response)
+
     return response.json()['response']['upload_url']
 
 
@@ -56,6 +59,7 @@ def upload_photo_to_vk(filename, upload_url, group_id, token, api_version):
         }
         response = requests.post(upload_url, params=params, files=files)
     response.raise_for_status()
+    handle_vk_error(response)
 
     return response.json()
 
@@ -71,6 +75,7 @@ def save_to_album(photo_response, group_id, token, api_version):
 
     response = requests.post(endpoint, params)
     response.raise_for_status()
+    handle_vk_error(response)
 
     response_unpacked = response.json()['response'][0]
     media_id = response_unpacked['id']
@@ -92,6 +97,7 @@ def post_to_group(group_id, token, api_version, owner_id, media_id, comment):
 
     response = requests.post(endpoint, params)
     response.raise_for_status()
+    handle_vk_error(response)
 
     return response.json()
 
