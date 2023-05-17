@@ -59,10 +59,10 @@ def upload_photo_to_vk(filename, upload_url, group_id, token, api_version):
         }
         response = requests.post(upload_url, params=params, files=files)
     response.raise_for_status()
+    response_unpacked = response.json()
     handle_vk_error(response)
-    response = response.json()
 
-    return response['server'], response['photo'], response['hash']
+    return response_unpacked['server'], response_unpacked['photo'], response_unpacked['hash']
 
 
 def save_to_album(server, photo, hash, group_id, token, api_version):
@@ -78,9 +78,9 @@ def save_to_album(server, photo, hash, group_id, token, api_version):
 
     response = requests.post(endpoint, params)
     response.raise_for_status()
-    handle_vk_error(response)
-
     response_unpacked = response.json()['response'][0]
+    handle_vk_error(response_unpacked)
+
     media_id = response_unpacked['id']
     owner_id = response_unpacked['owner_id']
 
@@ -100,9 +100,7 @@ def post_to_group(group_id, token, api_version, owner_id, media_id, comment):
 
     response = requests.post(endpoint, params)
     response.raise_for_status()
-    handle_vk_error(response)
-
-    return response.json()
+    handle_vk_error(response.json())
 
 
 if __name__ == '__main__':
@@ -115,9 +113,9 @@ if __name__ == '__main__':
     try:
         upload_url = get_vk_upload_url(group_id, token, api_version)
 
-        server, photo, hash = upload_photo_to_vk(filename, upload_url, group_id, token, api_version)
+        server, photo, _hash = upload_photo_to_vk(filename, upload_url, group_id, token, api_version)
 
-        media_id, owner_id = save_to_album(server, photo, hash, group_id, token, api_version)
+        media_id, owner_id = save_to_album(server, photo, _hash, group_id, token, api_version)
 
         post_to_group(group_id, token, api_version, owner_id, media_id, comment)
     finally:
