@@ -65,7 +65,7 @@ def upload_photo_to_vk(filename, upload_url, group_id, token, api_version):
     return response_unpacked['server'], response_unpacked['photo'], response_unpacked['hash']
 
 
-def save_to_album(server, photo, hash, group_id, token, api_version):
+def save_to_album(server, photo, _hash, group_id, token, api_version):
     endpoint = 'https://api.vk.com/method/photos.saveWallPhoto'
     params = {
         'group_id': group_id,
@@ -73,7 +73,7 @@ def save_to_album(server, photo, hash, group_id, token, api_version):
         'v': api_version,
         'server': server,
         'photo': photo,
-        'hash': hash,
+        'hash': _hash,
     }
 
     response = requests.post(endpoint, params)
